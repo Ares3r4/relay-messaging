@@ -8,7 +8,7 @@ export function useWebSocket(token, activeRoom) {
   const [messages, setMessages] = useState([])
   const [messagesRoom, setMessagesRoom] = useState(activeRoom)
   const [messagesToken, setMessagesToken] = useState(token)
-  const [connectionStatus, setConnectionStatus] = useState('disconnected')
+  const [connectionStatus, setConnectionStatus] = useState(token ? 'connecting' : 'disconnected')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -26,6 +26,9 @@ export function useWebSocket(token, activeRoom) {
     const socket = new WebSocket(`${SOCKET_URL}?token=${encodeURIComponent(token)}`)
     let disposed = false
     socketRef.current = socket
+    queueMicrotask(() => {
+      if (!disposed) setConnectionStatus('connecting')
+    })
 
     socket.addEventListener('open', () => {
       if (disposed) return
@@ -59,8 +62,13 @@ export function useWebSocket(token, activeRoom) {
     socket.addEventListener('error', () => {
       if (!disposed) setError('Connection error. Check that the Relay server is running.')
     })
-    socket.addEventListener('close', () => {
-      if (!disposed) setConnectionStatus('disconnected')
+    socket.addEventListener('close', (event) => {
+      if (disposed) return
+      setConnectionStatus('disconnected')
+      if (event.code !== 1000) {
+        const closeReason = event.reason ? `: ${event.reason}` : ''
+        setError(`WebSocket closed (${event.code})${closeReason}`)
+      }
     })
 
     return () => {
