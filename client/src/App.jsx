@@ -30,7 +30,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      <Sidebar activeRoom={currentRoom} onRoomChange={setCurrentRoom} user={user} onLogout={handleLogout} />
+      <Sidebar activeRoom={currentRoom} onRoomChange={setCurrentRoom} user={user} token={token} onLogout={handleLogout} />
       <ChatWindow
         activeRoom={currentRoom}
         currentUserId={user.sub}
